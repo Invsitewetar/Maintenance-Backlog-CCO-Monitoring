@@ -1,19 +1,18 @@
 import streamlit as st
 import pandas as pd
 
-# 1. Judul Aplikasi
 st.set_page_config(page_title="Maintenance Monitoring", layout="wide")
 st.title("🛠️ Maintenance Backlog & CCO Monitoring")
 st.markdown("---")
 
-# 2. Link CSV dari Google Sheets Admin Gudang
-# Masukkan link CSV hasil 'Publish to Web' di sini
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRyS_YZ3fhWcPNn9oNC75XF3WmUN2yQHsAD6Z-mm3vPGj7phA3jUVV9_v6GlRMlEDBxzowVy1nwwFdb/pub?gid=1771615802&single=true&output=csv"
 
 def load_data():
     try:
-        # Mengambil data langsung dari Google Sheets
-        df = pd.read_csv(SHEET_CSV_URL)
+        # Kita skip 3 baris awal supaya judul 'ps', 'Unit Type', dll jadi baris paling atas
+        df = pd.read_csv(SHEET_CSV_URL, skiprows=3)
+        # Menghapus kolom yang isinya kosong semua jika ada
+        df = df.dropna(how='all', axis=1)
         return df
     except:
         return None
@@ -25,27 +24,30 @@ if df is not None:
     st.sidebar.header("🔍 Pencarian")
     search_wo = st.sidebar.text_input("Cari Nomor WO")
     search_part = st.sidebar.text_input("Cari Part Number")
+    search_unit = st.sidebar.text_input("Cari Nomor Unit (Contoh: HT119)") # Tambah filter Unit
 
-    # Logika Filter
+    # Logika Filter (Kita sesuaikan nama kolomnya dengan gambar kamu)
     filtered_df = df.copy()
+    
     if search_wo:
+        # Gunakan 'Wo Number' (W huruf besar, o huruf kecil sesuai gambar kamu)
         filtered_df = filtered_df[filtered_df['Wo Number'].astype(str).str.contains(search_wo, case=False)]
+    
     if search_part:
         filtered_df = filtered_df[filtered_df['Part Number'].astype(str).str.contains(search_part, case=False)]
 
+    if search_unit:
+        # Kita filter berdasarkan kolom 'Unit Number'
+        filtered_df = filtered_df[filtered_df['Unit Number'].astype(str).str.contains(search_unit, case=False)]
+
     # --- Dashboard Ringkasan ---
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Backlog", len(filtered_df))
-    
-    if 'Aging (Day)' in filtered_df.columns:
-        critical_count = len(filtered_df[filtered_df['Aging (Day)'] > 14])
-        col2.metric("Critical Aging (>14 Hari)", critical_count)
-    
-    col3.info("Data tersambung otomatis ke Google Sheets Gudang.")
+    st.metric("Total Backlog", len(filtered_df))
 
     # --- Tabel Detail ---
     st.subheader("📋 Rincian Monitoring")
     st.dataframe(filtered_df, use_container_width=True)
 
+else:
+    st.warning("Menunggu link data...")
 else:
     st.warning("⚠️ Menunggu link data. Pastikan Google Sheets sudah di-'Publish to web' sebagai CSV.")
