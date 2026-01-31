@@ -1,20 +1,25 @@
 import streamlit as st
 import pandas as pd
 
+# 1. Konfigurasi Halaman
 st.set_page_config(page_title="Maintenance Monitoring", layout="wide")
 st.title("🛠️ Maintenance Backlog & CCO Monitoring")
 st.markdown("---")
 
+# MASUKKAN LINK CSV KAMU DI SINI
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRyS_YZ3fhWcPNn9oNC75XF3WmUN2yQHsAD6Z-mm3vPGj7phA3jUVV9_v6GlRMlEDBxzowVy1nwwFdb/pub?gid=1771615802&single=true&output=csv"
 
 def load_data():
     try:
-        # Kita skip 3 baris awal supaya judul 'ps', 'Unit Type', dll jadi baris paling atas
+        # SKIP 3 BARIS PERTAMA (None, None, None) agar baris 'ps' jadi judul
         df = pd.read_csv(SHEET_CSV_URL, skiprows=3)
-        # Menghapus kolom yang isinya kosong semua jika ada
-        df = df.dropna(how='all', axis=1)
+        # Bersihkan kolom yang namanya mengandung 'Unnamed'
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+        # Hapus baris yang benar-benar kosong
+        df = df.dropna(how='all')
         return df
-    except:
+    except Exception as e:
+        st.error(f"Gagal memuat data: {e}")
         return None
 
 df = load_data()
@@ -24,30 +29,29 @@ if df is not None:
     st.sidebar.header("🔍 Pencarian")
     search_wo = st.sidebar.text_input("Cari Nomor WO")
     search_part = st.sidebar.text_input("Cari Part Number")
-    search_unit = st.sidebar.text_input("Cari Nomor Unit (Contoh: HT119)") # Tambah filter Unit
+    # TAMBAHAN: Pencarian Nomor Unit
+    search_unit = st.sidebar.text_input("Cari Nomor Unit (Contoh: HT119)")
 
-    # Logika Filter (Kita sesuaikan nama kolomnya dengan gambar kamu)
+    # Logika Filter
     filtered_df = df.copy()
     
     if search_wo:
-        # Gunakan 'Wo Number' (W huruf besar, o huruf kecil sesuai gambar kamu)
-        filtered_df = filtered_df[filtered_df['Wo Number'].astype(str).str.contains(search_wo, case=False)]
+        # Menggunakan 'Wo Number' sesuai gambar image_037f00.png
+        filtered_df = filtered_df[filtered_df['Wo Number'].astype(str).str.contains(search_wo, case=False, na=False)]
     
     if search_part:
-        filtered_df = filtered_df[filtered_df['Part Number'].astype(str).str.contains(search_part, case=False)]
+        filtered_df = filtered_df[filtered_df['Part Number'].astype(str).str.contains(search_part, case=False, na=False)]
 
     if search_unit:
-        # Kita filter berdasarkan kolom 'Unit Number'
-        filtered_df = filtered_df[filtered_df['Unit Number'].astype(str).str.contains(search_unit, case=False)]
+        # Menggunakan 'Unit Number' sesuai gambar image_037f00.png
+        filtered_df = filtered_df[filtered_df['Unit Number'].astype(str).str.contains(search_unit, case=False, na=False)]
 
     # --- Dashboard Ringkasan ---
-    st.metric("Total Backlog", len(filtered_df))
+    st.metric("Total Data Ditemukan", len(filtered_df))
 
-    # --- Tabel Detail ---
+    # --- Tabel Utama ---
     st.subheader("📋 Rincian Monitoring")
     st.dataframe(filtered_df, use_container_width=True)
 
 else:
-    st.warning("Menunggu link data...")
-else:
-    st.warning("⚠️ Menunggu link data. Pastikan Google Sheets sudah di-'Publish to web' sebagai CSV.")
+    st.warning("⚠️ Menunggu link data dari Google Sheets...")
