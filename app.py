@@ -8,7 +8,7 @@ st.markdown("---")
 
 # 2. Link CSV dari Google Sheets Admin Gudang
 # Masukkan link CSV hasil 'Publish to Web' di sini
-SHEET_CSV_URL = "GANTI_DENGAN_LINK_CSV_KAMU"
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRyS_YZ3fhWcPNn9oNC75XF3WmUN2yQHsAD6Z-mm3vPGj7phA3jUVV9_v6GlRMlEDBxzowVy1nwwFdb/pub?gid=1771615802&single=true&output=csv"
 
 def load_data():
     try:
