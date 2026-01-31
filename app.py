@@ -55,5 +55,3 @@ if df is not None:
 
 else:
     st.warning("⚠️ Menunggu data. Pastikan Google Sheets sudah di-publish ke web sebagai CSV.")
-else:
-    st.warning("⚠️ Menunggu link data dari Google Sheets...")
