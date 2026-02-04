@@ -15,7 +15,7 @@ def load_data():
         df = pd.read_csv(SHEET_CSV_URL)
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
         
-        # Otomatis buang kolom Tes jika masih ada di Sheets
+        # Otomatis buang kolom Tes jika masih ada
         cols_to_drop = ['Tes', 'Tes 2']
         df = df.drop(columns=[c for c in cols_to_drop if c in df.columns], errors='ignore')
         
@@ -27,13 +27,20 @@ def load_data():
 df = load_data()
 
 if df is not None:
-    # --- Sidebar Filter Pencarian ---
+    # --- Sidebar Filter Pencarian (URUTAN BARU) ---
     st.sidebar.header("🔍 Pencarian")
+    
+    # 1. Unit Number
     search_unit = st.sidebar.text_input("Cari Nomor Unit (Contoh: GR004)")
-    search_wo = st.sidebar.text_input("Cari Nomor WO")
-    search_part = st.sidebar.text_input("Cari Part Number")
-    # TAMBAHAN: Pencarian berdasarkan PS Number
+    
+    # 2. PS Number (Sekarang di bawah Unit)
     search_ps = st.sidebar.text_input("Cari Nomor PS")
+    
+    # 3. Nomor WO
+    search_wo = st.sidebar.text_input("Cari Nomor WO")
+    
+    # 4. Part Number
+    search_part = st.sidebar.text_input("Cari Part Number")
 
     # Logika Filter
     filtered_df = df.copy()
@@ -41,15 +48,14 @@ if df is not None:
     if search_unit:
         filtered_df = filtered_df[filtered_df['Unit Number'].astype(str).str.contains(search_unit, case=False, na=False)]
     
+    if search_ps:
+        filtered_df = filtered_df[filtered_df['PS Number'].astype(str).str.contains(search_ps, case=False, na=False)]
+
     if search_wo:
         filtered_df = filtered_df[filtered_df['Wo Number'].astype(str).str.contains(search_wo, case=False, na=False)]
     
     if search_part:
         filtered_df = filtered_df[filtered_df['Part Number'].astype(str).str.contains(search_part, case=False, na=False)]
-        
-    if search_ps:
-        # Mencari di kolom 'PS Number' sesuai data kamu
-        filtered_df = filtered_df[filtered_df['PS Number'].astype(str).str.contains(search_ps, case=False, na=False)]
 
     # --- Dashboard ---
     st.metric("Total Data Ditemukan", len(filtered_df))
