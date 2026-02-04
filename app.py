@@ -13,12 +13,11 @@ SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRyS_YZ3fhWcPNn
 def load_data():
     try:
         df = pd.read_csv(SHEET_CSV_URL)
-        # Menghapus kolom 'Unnamed'
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
         
-        # MENGHAPUS KOLOM TES & TES 2 (Agar tidak muncul di web)
+        # Otomatis buang kolom Tes jika masih ada di Sheets
         cols_to_drop = ['Tes', 'Tes 2']
-        df = df.drop(columns=[c for c in cols_to_drop if c in df.columns])
+        df = df.drop(columns=[c for c in cols_to_drop if c in df.columns], errors='ignore')
         
         return df
     except Exception as e:
@@ -33,27 +32,29 @@ if df is not None:
     search_unit = st.sidebar.text_input("Cari Nomor Unit (Contoh: GR004)")
     search_wo = st.sidebar.text_input("Cari Nomor WO")
     search_part = st.sidebar.text_input("Cari Part Number")
+    # TAMBAHAN: Pencarian berdasarkan PS Number
+    search_ps = st.sidebar.text_input("Cari Nomor PS")
 
-    # Logika Filter Berdasarkan Gambar Terbaru
+    # Logika Filter
     filtered_df = df.copy()
     
     if search_unit:
-        # Mencari di kolom 'Unit Number' sesuai image_02f7a0
         filtered_df = filtered_df[filtered_df['Unit Number'].astype(str).str.contains(search_unit, case=False, na=False)]
     
     if search_wo:
-        # Mencari di kolom 'Wo Number' sesuai image_02f7a0
         filtered_df = filtered_df[filtered_df['Wo Number'].astype(str).str.contains(search_wo, case=False, na=False)]
     
     if search_part:
         filtered_df = filtered_df[filtered_df['Part Number'].astype(str).str.contains(search_part, case=False, na=False)]
+        
+    if search_ps:
+        # Mencari di kolom 'PS Number' sesuai data kamu
+        filtered_df = filtered_df[filtered_df['PS Number'].astype(str).str.contains(search_ps, case=False, na=False)]
 
-    # --- Dashboard Ringkasan ---
-    st.metric("Total Data", len(filtered_df))
-
-    # --- Tabel Utama ---
+    # --- Dashboard ---
+    st.metric("Total Data Ditemukan", len(filtered_df))
     st.subheader("📋 Rincian Monitoring Data")
     st.dataframe(filtered_df, use_container_width=True)
 
 else:
-    st.warning("⚠️ Menunggu data dari Google Sheets...")
+    st.warning("⚠️ Menunggu data...")
